@@ -1,0 +1,33 @@
+#!/bin/bash
+
+sudo apt install build-essential devscripts equivs lintian gnupg1 gpgv1 lsb-release curl ca-certificates libssl-dev
+sudo apt install libsrt-dev
+
+mkdir build-dir
+cd build-dir
+
+apt source ffmpeg
+
+cd ffmpeg-*/
+sed -i 's/^Build-Depends:$/&\n libsrt-dev,\n libssl-dev,/' debian/control
+sed -i 's/^CONFIG :=.*$/&\n        --enable-libsrt \\/' debian/rules
+dch --local +srt 'Rebuilt with SRT support'
+dch --release ''
+cd ..
+
+sudo mk-build-deps -i -r ffmpeg-*/debian/control
+
+cd ffmpeg-*/
+debuild -us -uc -b
+cd ..
+
+rm *dbgsym*
+rm *-dev_*
+rm libavfilter7_*
+rm libavcodec58_*
+
+mkdir ../deb
+mv *deb ../deb
+
+
+
